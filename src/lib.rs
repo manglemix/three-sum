@@ -3,15 +3,15 @@ const MAX_NUMBER: i64 = 3000;
 const NUMBER_RANGE: i64 = MAX_NUMBER - MIN_NUMBER;
 
 
-/// Educated approach to the three sums problem involving non-comparison based sorting and binary search
+/// Educated approach to the three sums problem involving non-comparison based sorting and a simplified HashSet
 /// 
 /// # Runtime Complexity
 /// ## Best
 /// O(N)
 /// ## Average
-/// O(N^2 log n) (Probably)
+/// O(N^2)
 /// ## Worst
-/// O(N^2 log n)
+/// O(N^2)
 pub fn three_sum(source: &[i64]) -> Vec<[i64; 3]> {
     // Counting sort since we know the range of numbers
     let mut sorting_array = [0usize; NUMBER_RANGE as usize];
@@ -33,18 +33,21 @@ pub fn three_sum(source: &[i64]) -> Vec<[i64; 3]> {
     let mut result = Vec::new();
 
     // Iterate from the beginning of the unique array to the end
-    for mut left in 0..unique_array.len() {
+    for left in 0..unique_array.len() {
         let left_num = unique_array[left].0;
         let left_num_count = unique_array[left].1;
 
         // Iterate from the end of the unique array to left inclusive
-        for mut right in (left..unique_array.len()).rev() {
+        for right in (left..unique_array.len()).rev() {
             let right_num = unique_array[right].0;
             let right_num_count = unique_array[right].1;
 
             // While there is no guarantee that an appropriate third number exists,
             // we are guaranteed that it must lie between the left and right number
             let third_num = 0 - left_num - right_num;
+
+            // The two following range checks prevent duplicate solutions
+            // as the algorithm will only find solutions within the current range
 
             // Since we are iterating in reverse, we know that if we reach
             // this condition that there are no more solutions for the given
@@ -61,7 +64,7 @@ pub fn three_sum(source: &[i64]) -> Vec<[i64; 3]> {
             // Early exit cases with duplicate number
             // 
             // If the third number is equal to the left or right number, then
-            // we do not need to binary search as its presence is confirmed.
+            // we do not need to search for the third number as its presence is confirmed.
             // Instead, we just need to check if there are enough numbers to produce
             // a solution
             if third_num == left_num {
@@ -88,29 +91,12 @@ pub fn three_sum(source: &[i64]) -> Vec<[i64; 3]> {
                 continue;
             }
 
-            // binary search for the presence of the third number
-            loop {
-                let mid = (right + left) / 2;
-
-                let mid_num = unique_array[mid].0;
-
-                if mid_num == third_num {
-                    // presence of third number is confirmed!
-                    result.push([left_num, third_num, right_num]);
-                    break;
-                }
-
-                // binary search stuff
-
-                if mid == left {
-                    break;
-                }
-
-                if mid_num > third_num {
-                    right = mid;
-                } else {
-                    left = mid;
-                }
+            // Use the sorting array as a hashset, where the hash is the third number
+            // Remember, the sorting array stores the counts of each number,
+            // so a count of more than 0 means that the number exists
+            let third_index = (third_num - MIN_NUMBER) as usize;
+            if sorting_array[third_index] > 0 {
+                result.push([left_num, third_num, right_num]);
             }
         }
     }
